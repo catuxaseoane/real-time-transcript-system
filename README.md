@@ -156,5 +156,5 @@ python tui.py             # Textual TUI
 ### Tests
 
 ```bash
-python test_handler.py    # 23 unit tests for all refinement operations
+python -m unittest tests/test_handler.py    # 23 unit tests for all refinement operations
 ```
