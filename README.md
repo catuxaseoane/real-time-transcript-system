@@ -110,3 +110,51 @@ The refinements delete "news" and "?" then insert "news?" — merging them into 
 ### Paragraph-level speakers
 
 Speaker indexes (`S`) can fluctuate within a paragraph. Use **majority vote** for a stable label: the most common `S` in a paragraph is its speaker. UIs may display 1-indexed (Speaker 1, Speaker 2, ...).
+
+---
+
+## My solution
+
+### What I built
+
+Two TUI implementations that both consume the same polling + refinement logic:
+
+- **`tui_basic.py`** — dependency-free terminal viewer using ANSI escape codes. Full-screen redraw on each poll cycle, subtitle-style: paragraphs build up in place, speaker label only shown when the speaker changes.
+- **`tui.py`** — [Textual](https://textual.textualize.io/) TUI. One `Static` widget per paragraph, updated in-place as words and refinements arrive. Byte counter shown in a status bar at the bottom.
+
+Core logic lives in `transcript/`:
+
+- `entries.py` — `Word` and `Paragraph` dataclasses. `Paragraph.speaker()` uses majority vote via `Counter`.
+- `refinements.py` — apply functions for every refinement instruction type (`word-update`, `word-delete`, `word-insert`, `paragraph-insert`).
+- `handler.py` — parses each JSONL line and dispatches to the right apply function.
+- `state.py` — shared `StreamState` (paragraphs list + byte offset + status).
+
+`poller.py` polls `GET /transcript` using `Range: bytes=N-` headers so only new bytes are fetched each cycle. Both TUIs call `poll()` in an async task alongside their display loop.
+
+Paragraphs are sorted chronologically by their earliest word timestamp before display — necessary because `paragraph-insert` can leave the list in non-chronological order.
+
+### Setup and run
+
+```bash
+# 1. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 2. Install all dependencies (FastAPI, uvicorn, httpx, textual, rich)
+pip install -e .
+
+# 3. In one terminal — start the server
+uvicorn server:app
+
+# 4. In another terminal (same venv) — run one of the TUIs
+python tui_basic.py       # simple, no extra dependencies
+python tui.py             # Textual TUI
+
+# Press q (tui.py) or Ctrl-C (tui_basic.py) to exit
+```
+
+### Tests
+
+```bash
+python test_handler.py    # 23 unit tests for all refinement operations
+```
