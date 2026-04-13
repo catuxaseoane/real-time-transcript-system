@@ -1,0 +1,12 @@
+[project]
+name = "live-transcript-assignment"
+version = "0.1.0"
+description = "Quartr Live Transcript — coding assignment"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "rich",
+    "textual",
+]
